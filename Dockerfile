@@ -16,5 +16,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 5) 애플리케이션 코드 복사
 COPY . .
 
-# 6) 컨테이너 시작 커맨드
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# 6) 문서화용 포트 노출
+EXPOSE 8080
+
+# 7) 컨테이너 시작 커맨드
+#    - ${PORT:-8080}: Cloud Run이 주입한 PORT 사용 (없으면 8080)
+#    - --host 0.0.0.0: 외부 요청 허용
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
