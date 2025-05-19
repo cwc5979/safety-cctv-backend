@@ -1,60 +1,90 @@
-from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
+from sqlmodel import SQLModel, Field
 
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserRead(BaseModel):
-    id: int
-    email: EmailStr
-    created_at: datetime
+# ----- User Schemas -----
+class UserBase(SQLModel):
+    email: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class UserLogin(BaseModel):
-    email: EmailStr
+class UserCreate(UserBase):
     password: str
 
-class CamCreate(BaseModel):
-    name: str
-    notify_helmet: Optional[bool] = True
-    notify_vest: Optional[bool] = True
-    notify_boots: Optional[bool] = True
-
-class CamRead(BaseModel):
+class UserRead(UserBase):
     id: int
+    cams: List["CamRead"] = []  # related cameras
+    notifications: List["NotificationRead"] = []  # related notifications
+
+
+# ----- Cam Schemas -----
+class CamBase(SQLModel):
     name: str
+    helmet_alert: bool = True
+    vest_alert: bool = True
+    shoes_alert: bool = True
+
+    class Config:
+        from_attributes = True
+
+class CamCreate(CamBase):
     owner_id: int
-    notify_helmet: bool
-    notify_vest: bool
-    notify_boots: bool
-    created_at: datetime
+
+class CamRead(CamBase):
+    id: int
+    owner_id: int
+    detections: List["DetectionRead"] = []
+
+
+# ----- Detection Schemas -----
+class DetectionBase(SQLModel):
+    helmet: bool
+    vest: bool
+    shoes: bool
+    coords: str
+    image_url: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-class RegionDetection(BaseModel):
-    position: str
-    missing_items: List[str]
-
-class DetectionIn(BaseModel):
+class DetectionCreate(DetectionBase):
     cam_id: int
-    detections: List[RegionDetection]
-    image: Optional[str] = None  # base64 encoded snapshot
 
-class NotificationOut(BaseModel):
+class DetectionRead(DetectionBase):
     id: int
     cam_id: int
-    message: str
-    image_path: Optional[str]
     timestamp: datetime
+    notifications: List["NotificationRead"] = []
+
+
+# ----- Notification Schemas -----
+class NotificationBase(SQLModel):
+    is_read: bool = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class NotificationCreate(NotificationBase):
+    user_id: int
+    detection_id: int
+
+class NotificationRead(NotificationBase):
+    id: int
+    user_id: int
+    detection_id: int
+    created_at: datetime
+
+# ----- Protected Info Schema -----
+class ProtectedInfo(SQLModel):
+    id: int
+    email: str
+
+    class Config:
+        from_attributes = True
+
+# Resolve forward refs
+UserRead.update_forward_refs()
+CamRead.update_forward_refs()
+DetectionRead.update_forward_refs()
+NotificationRead.update_forward_refs()

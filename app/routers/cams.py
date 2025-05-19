@@ -1,30 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
-from app import schemas, crud, utils, database
+from typing import List
 
-router = APIRouter()
+from app import crud, schemas
+from app.database import get_db
+from app.deps import get_current_user
 
-@router.post("/", response_model=schemas.CamRead)
-def create_cam(data: schemas.CamCreate,
-               db: Session = Depends(database.get_db),
-               user = Depends(utils.get_current_user)):
-    return crud.create_cam(db, user.id, data)
+router = APIRouter(prefix="/cams", tags=["cams"])
 
-@router.get("/", response_model=list[schemas.CamRead])
-def read_cams(db: Session = Depends(database.get_db),
-              user = Depends(utils.get_current_user)):
-    return db.query(crud.models.Cam).filter(crud.models.Cam.owner_id == user.id).all()
+@router.post("/", response_model=schemas.CamRead, status_code=status.HTTP_201_CREATED)
+def create_cam(
+    cam_in: schemas.CamCreate,
+    session: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+) -> schemas.CamRead:
+    return crud.create_cam(
+        session,
+        name=cam_in.name,
+        owner_id=current_user.id,
+        helmet_alert=cam_in.helmet_alert,
+        vest_alert=cam_in.vest_alert,
+        shoes_alert=cam_in.shoes_alert,
+    )
 
-@router.patch("/{cam_id}", response_model=schemas.CamRead)
-def update_cam(cam_id: int, data: schemas.CamCreate,
-               db: Session = Depends(database.get_db),
-               user = Depends(utils.get_current_user)):
-    cam = crud.get_cam(db, cam_id)
-    if cam.owner_id != user.id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "권한 없음")
-    for k, v in data.dict().items():
-        setattr(cam, k, v)
-    db.add(cam)
-    db.commit()
-    db.refresh(cam)
-    return cam
+@router.get("/", response_model=List[schemas.CamRead])
+def read_cams(
+    session: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+) -> List[schemas.CamRead]:
+    return crud.get_cams_for_user(session, owner_id=current_user.id)

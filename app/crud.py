@@ -1,36 +1,81 @@
-from sqlalchemy.orm import Session
-from app import models, schemas, utils
+from sqlmodel import Session, select
+from typing import List, Optional
+from app.models import Cam, Detection, Notification
 
-def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+# Cam CRUD
 
-def create_user(db: Session, user: schemas.UserCreate):
-    hashed = utils.get_password_hash(user.password)
-    db_user = models.User(email=user.email, hashed_password=hashed)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+def create_cam(
+    session: Session,
+    name: str,
+    owner_id: int,
+    helmet_alert: bool = True,
+    vest_alert: bool = True,
+    shoes_alert: bool = True,
+) -> Cam:
+    cam = Cam(
+        name=name,
+        owner_id=owner_id,
+        helmet_alert=helmet_alert,
+        vest_alert=vest_alert,
+        shoes_alert=shoes_alert,
+    )
+    session.add(cam)
+    session.commit()
+    session.refresh(cam)
+    return cam
 
-def authenticate_user(db: Session, email: str, password: str):
-    user = get_user_by_email(db, email)
-    if not user or not utils.verify_password(password, user.hashed_password):
-        return None
-    return user
 
-def create_cam(db: Session, owner_id: int, cam: schemas.CamCreate):
-    db_cam = models.Cam(owner_id=owner_id, **cam.dict())
-    db.add(db_cam)
-    db.commit()
-    db.refresh(db_cam)
-    return db_cam
+def get_cams_for_user(session: Session, owner_id: int) -> List[Cam]:
+    return session.exec(select(Cam).where(Cam.owner_id == owner_id)).all()
 
-def get_cam(db: Session, cam_id: int):
-    return db.query(models.Cam).filter(models.Cam.id == cam_id).first()
+# Detection CRUD
 
-def create_notification(db: Session, cam_id: int, message: str, image_path: str = None):
-    notif = models.Notification(cam_id=cam_id, message=message, image_path=image_path)
-    db.add(notif)
-    db.commit()
-    db.refresh(notif)
-    return notif
+def create_detection(
+    session: Session,
+    cam_id: int,
+    helmet: bool,
+    vest: bool,
+    shoes: bool,
+    coords: str,
+    image_url: Optional[str] = None,
+) -> Detection:
+    det = Detection(
+        cam_id=cam_id,
+        helmet=helmet,
+        vest=vest,
+        shoes=shoes,
+        coords=coords,
+        image_url=image_url,
+    )
+    session.add(det)
+    session.commit()
+    session.refresh(det)
+    return det
+
+
+def get_detections_for_cam(session: Session, cam_id: int) -> List[Detection]:
+    return session.exec(select(Detection).where(Detection.cam_id == cam_id)).all()
+
+# Notification CRUD
+
+def create_notification(session: Session, user_id: int, detection_id: int) -> Notification:
+    note = Notification(user_id=user_id, detection_id=detection_id)
+    session.add(note)
+    session.commit()
+    session.refresh(note)
+    return note
+
+
+def get_user_notifications(session: Session, user_id: int) -> List[Notification]:
+    return session.exec(select(Notification).where(Notification.user_id == user_id)).all()
+
+
+def get_notification(session: Session, notification_id: int) -> Optional[Notification]:
+    return session.get(Notification, notification_id)
+
+
+def delete_notification(session: Session, notification_id: int) -> None:
+    note = session.get(Notification, notification_id)
+    if note:
+        session.delete(note)
+        session.commit()

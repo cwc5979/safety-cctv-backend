@@ -1,0 +1,5 @@
+# 환경변수 파일
+.env
+# Python bytecode
+__pycache__/
+*.py[cod]
