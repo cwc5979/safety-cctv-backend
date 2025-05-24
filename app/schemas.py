@@ -83,6 +83,13 @@ class ProtectedInfo(SQLModel):
     class Config:
         from_attributes = True
 
+# ------ Token -------
+class FCMTokenCreate(SQLModel):
+    token: str
+
+    class Config:
+        from_attributes = True
+
 # Resolve forward refs
 UserRead.update_forward_refs()
 CamRead.update_forward_refs()

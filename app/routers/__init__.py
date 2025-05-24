@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from .detect import router as detect_router
 
 # 각 서브 라우터를 import
 from .auth import router as auth_router
@@ -9,6 +10,7 @@ from .protected import router as protected_router
 
 # 메인 API 라우터 생성
 api_router = APIRouter()
+api_router.include_router(detect_router)
 
 # 서브 라우터 포함
 api_router.include_router(auth_router)

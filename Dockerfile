@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # 2) 작업 디렉터리
 WORKDIR /app
 
-# 3) 시스템 패키지 설치: 빌드 도구, libpq, SSL, zlib, libffi, JPEG 등
+# 3) 시스템 패키지 설치
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       build-essential \
@@ -20,16 +20,18 @@ RUN apt-get update && \
       libjpeg-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# 4) Python 의존성 설치
+# 4) 의존성 설치
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5) 애플리케이션 코드 복사
+# 5) 애플리케이션 복사
 COPY . .
 
-# 6) 문서화용 포트 노출 (명시적)
+# 5.1) 빈 media 폴더 생성 (StaticFiles 마운트 대비)
+RUN mkdir -p app/media
+
+# 6) 문서화용 포트 노출
 EXPOSE 8080
 
-# 7) 컨테이너 시작
-#    app/main.py 의 __main__ 블록이 PORT 환경변수를 읽어 uvicorn을 실행합니다.
+# 7) 컨테이너 시작 (app/main.py __main__ 블록에서 PORT 읽음)
 ENTRYPOINT ["python", "-m", "app.main"]

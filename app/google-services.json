@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "537124944751",
+    "project_id": "cctvprojec-f1c76",
+    "storage_bucket": "cctvprojec-f1c76.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:537124944751:android:289d638e3f233cca1f069a",
+        "android_client_info": {
+          "package_name": "com.example.fcmtest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSpVpSysGH6ZbyZNIChWFqWmZy01mYrpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

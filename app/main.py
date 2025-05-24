@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import create_db_and_tables
 from app.routers import api_router
-from app.routers import cams, detections, notifications
+from app.routers import cams, detections, notifications, detect
 
 app = FastAPI(title="Safety CCTV Backend", version="1.0.0")
 
@@ -19,6 +19,7 @@ app.add_middleware(
 app.include_router(cams.router)
 app.include_router(detections.router)
 app.include_router(notifications.router)
+app.include_router(detect.router)
 
 app.add_middleware(
     CORSMiddleware,

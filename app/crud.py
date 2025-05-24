@@ -1,6 +1,8 @@
 from sqlmodel import Session, select
 from typing import List, Optional
 from app.models import Cam, Detection, Notification
+from sqlalchemy.orm import Session
+from app.models import FCMToken
 
 # Cam CRUD
 
@@ -79,3 +81,15 @@ def delete_notification(session: Session, notification_id: int) -> None:
     if note:
         session.delete(note)
         session.commit()
+
+def save_user_token(db: Session, user_id: int, token: str) -> FCMToken:
+    db_obj = FCMToken(user_id=user_id, token=token)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+def get_user_tokens(db: Session, user_id: int) -> list[str]:
+    tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
+    return [t.token for t in tokens]
